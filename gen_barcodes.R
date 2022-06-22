@@ -56,4 +56,44 @@ gen_barcodes <- function(n_bcds,
   
 }
 
-gen_barcodes(4, 4, 4)
+
+check_balance <- function(list_of_barcodes, max_frac = 0.35){
+  df <- data.frame(bc = list_of_barcodes)
+  
+  l <- str_length(list_of_barcodes[1])
+  
+  pass_check = T # assume passes check
+  
+  for(i in 1:l){
+    df2 <- df %>%
+      mutate(nt = str_sub(bc, i, i)) %>%
+      group_by(nt) %>%
+      mutate(n = n()) %>%
+      ungroup() %>%
+      mutate(frac = n/n()) 
+    
+    nt_frac = max(df2$frac)
+    
+    if(nt_frac > max_frac){
+      pass_check = F
+    }
+  }
+  
+  return(pass_check)
+  
+}
+
+gen_balanced_barcodes <- function(n_bcds, bc_l, min_different, max_frac = 0.35, attempts = 20){
+  for(i in 1:attempts){
+    this_bcs <- gen_barcodes(n_bcds, bc_l, min_different)
+    
+    balanced = check_balance(this_bcs, max_frac)
+    if(balanced){
+      return(this_bcs)
+      break
+    }
+  }
+  print("unable to balance barcodes")
+}
+
+gen_balanced_barcodes(6, 5, 4, 0.35)
