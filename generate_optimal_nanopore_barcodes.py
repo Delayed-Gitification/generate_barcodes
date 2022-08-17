@@ -195,21 +195,43 @@ def analyse_demulti(full_seq, length, forward_bcs, reverse_bcs, min_score, max_a
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--initial_barcodes")
-	parser.add_argument("-e", "--error_rate", type=float, default=0.01)
-	parser.add_argument("-d", "--indel_rate", type=float, default=0.01)
+	parser.add_argument("-e", "--error_rate", type=float, default=0.05)
+	parser.add_argument("-d", "--indel_rate", type=float, default=0.03)
 	parser.add_argument("-p", "--padding", type=int, default=15)
-	parser.add_argument("--length", type=int, default=50, help="how long to consider")
+	parser.add_argument("-a", "--attempts", type=int, default=100)
+	parser.add_argument("--barcode_length", type=int, default=40)
+	parser.add_argument("-n", "--barcode_n", type=int, default=6)
+	parser.add_argument("--length", type=int, default=80, help="how long to consider")
 	parser.add_argument("--times", type=int, help="How many attempts to do mutations and indels", default=2)
-	parser.add_argument("-s", "--min_score", type=float, default=92, help="When matching barcodes")
-	parser.add_argument("--max_ambiguity", type=float, default=82, help="If another barcode has this score or higher, then ignore this read because it's ambiguous")
-	parser.add_argument("--iterations", type=int, default=100, help="Number of times to check each "
+	parser.add_argument("-s", "--min_score", type=float, default=85, help="When matching barcodes")
+	parser.add_argument("--max_ambiguity", type=float, default=75, help="If another barcode has this score or higher, then ignore this read because it's ambiguous")
+	parser.add_argument("--iterations", type=int, default=1000, help="Number of times to check each "
 	                                                                 "barcode set")
 	args = parser.parse_args()
 
 	# print(args)
 
-	forward_bcs = {'f1': "TGCAGCACGACATCAGCACT", 'f2':"AGCCGATCGATCGATCAAGC"}
-	reverse_bcs = {'r1':"AATTCGATCGGGACTAACAC", 'r2':"TCGACTACGCACTAGCATTA"}
+	forward_bcs = {"F1": "CTCTAATCGAGAATTCCGAT",
+"F2": "TAAGCATTGAACATGTGTCC",
+"F3": "GGTGTGTTGTGTGTTGTATT",
+"F4": "AACCTCGTATTATAACACGA",
+"F5": "TAGAACGCATAGCCATAATA",
+"F6": "ACTTATATAGTGGCGTAACG"}
+
+
+	reverse_bcs = {"R1": "AACAGTTAATGCGTTCATCA",
+"R2": "TATCCTAGACTGCTAGTTCT",
+"R3": "TCTTCTTATTAGTAGCCAAC",
+"R4": "TCCATTCATAGAATCGATGG",
+"R5": "ATAGTATTGGCCTCAGAAGT",
+"R6": "GATATATTGAGAAGGCTTGG"}
+
+	forward_bcs = {'1': 'GAGCGTCTGGAATTGGAGGTAAGATCGAGTCTCTAATTCC', 2: 'ATTATATATCAACATTGGCTCCGGCGACCTGTATTCACAA',
+	 3: 'CGGTTAACTGAGAGAAGACCATGATGAATACAGATAAGCT', 4: 'CTGTACGTTCTTGTGGCATCAGTTGGTCCTTCCAACGTGA',
+	 5: 'ATGCCGGAATGAACCTAATCTACTTATGCCGCTGTGGTGT', 6: 'CGGATAACCTTCGTTCCAACTTCTTCTGAACACATATCCT'}
+	reverse_bcs = {'1': 'ATATGTCGCGTGCAGAGGTATGTGGACGTGATAATCAAGG', 2: 'GATAACTGATCCTTCCACTACAGAACTCCTTCGCTAATTG',
+	 3: 'AGCTGCTTAGGTCACCGATTCGAGCGAGCGTCTCAATTAA', 4: 'TCTCTGCAACCTACTGGTATACATATTATATACTTCAACC',
+	 5: 'CGGTGACCGTTGTTATATTGTTATCCAGGTAAGGATCTCC', 6: 'CAATCCACTTGACATGGTTGGTGCTCACGAACGTGAGGAT'}
 
 	successful = 0
 	for _ in range(args.iterations):
@@ -219,7 +241,62 @@ def main():
 			successful += 1
 	success_rate = successful / args.iterations
 
-	print("Success rate: " + str(success_rate*100) + "%")
+	print(success_rate)
+
+	# Iteratively add barcodes and choose best ones
+	for _ in range(5):
+		forward_bcs = {str(1): make_barcode(args.barcode_length)}
+		reverse_bcs = {str(1): make_barcode(args.barcode_length)}
+		for n in range(2, args.barcode_n+1):
+			results = {}
+			for _ in range(args.attempts):
+				# Try a barcode
+				forward_bcs[n] = make_barcode(args.barcode_length)
+				reverse_bcs[n] = make_barcode(args.barcode_length)
+				successful = 0
+				for _ in range(args.iterations):
+					if are_these_bcs_good(forward_bcs, reverse_bcs, args.padding, args.times,
+					                      args.error_rate, args.indel_rate, args.length,
+					                      args.min_score, args.max_ambiguity):
+						successful += 1
+				success_rate = successful / args.iterations
+
+				results[forward_bcs[n] + "_" + reverse_bcs[n]] = success_rate
+
+				#print("Success rate: " + str(success_rate*100) + "%")
+			best_key = max(results, key=results.get)
+			print(results[best_key])
+			forward_bcs[n] = best_key.split("_")[0]
+			reverse_bcs[n] = best_key.split("_")[1]
+
+		print(forward_bcs)
+		print(reverse_bcs)
+
+
+
+def make_barcode(length, GC_min=0.3, GC_max=0.5, max_run=2):
+	while True:
+		bad = False  # assume good
+		possible_bc = ''.join(random.choices(nts, k=length))
+
+		GC = len([i for i in possible_bc if i =="C" or i =="G"])/length
+
+		if GC < GC_min:
+			bad = True
+		if GC > GC_max:
+			bad = True
+		if "A"*(max_run+1) in possible_bc:
+			bad = True
+		if "C"*(max_run+1) in possible_bc:
+			bad = True
+		if "T"*(max_run+1) in possible_bc:
+			bad = True
+		if "G"*(max_run+1) in possible_bc:
+			bad = True
+
+		if not bad:
+			break
+	return possible_bc
 
 
 if __name__ == "__main__":
