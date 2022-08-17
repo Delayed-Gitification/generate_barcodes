@@ -200,11 +200,11 @@ def main():
 	parser.add_argument("-p", "--padding", type=int, default=15)
 	parser.add_argument("-a", "--attempts", type=int, default=100)
 	parser.add_argument("--barcode_length", type=int, default=40)
-	parser.add_argument("-n", "--barcode_n", type=int, default=6)
+	parser.add_argument("-n", "--barcode_n", type=int, default=12)
 	parser.add_argument("--length", type=int, default=80, help="how long to consider")
 	parser.add_argument("--times", type=int, help="How many attempts to do mutations and indels", default=2)
 	parser.add_argument("-s", "--min_score", type=float, default=85, help="When matching barcodes")
-	parser.add_argument("--max_ambiguity", type=float, default=75, help="If another barcode has this score or higher, then ignore this read because it's ambiguous")
+	parser.add_argument("--max_ambiguity", type=float, default=70, help="If another barcode has this score or higher, then ignore this read because it's ambiguous")
 	parser.add_argument("--iterations", type=int, default=1000, help="Number of times to check each "
 	                                                                 "barcode set")
 	args = parser.parse_args()
@@ -241,10 +241,10 @@ def main():
 			successful += 1
 	success_rate = successful / args.iterations
 
-	print(success_rate)
+	#print(success_rate)
 
 	# Iteratively add barcodes and choose best ones
-	for _ in range(5):
+	for _ in range(10):
 		forward_bcs = {str(1): make_barcode(args.barcode_length)}
 		reverse_bcs = {str(1): make_barcode(args.barcode_length)}
 		for n in range(2, args.barcode_n+1):
@@ -265,12 +265,13 @@ def main():
 
 				#print("Success rate: " + str(success_rate*100) + "%")
 			best_key = max(results, key=results.get)
-			print(results[best_key])
 			forward_bcs[n] = best_key.split("_")[0]
 			reverse_bcs[n] = best_key.split("_")[1]
+		print(results[best_key])
 
 		print(forward_bcs)
 		print(reverse_bcs)
+		print("")
 
 
 
