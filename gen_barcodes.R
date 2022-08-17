@@ -97,3 +97,5 @@ gen_balanced_barcodes <- function(n_bcds, bc_l, min_different, max_frac = 0.35, 
 }
 
 gen_balanced_barcodes(6, 5, 4, 0.35)
+
+
