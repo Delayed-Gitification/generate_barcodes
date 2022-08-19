@@ -202,9 +202,9 @@ def main():
 	parser.add_argument("--barcode_length", type=int, default=40)
 	parser.add_argument("-n", "--barcode_n", type=int, default=12)
 	parser.add_argument("--length", type=int, default=80, help="how long to consider")
-	parser.add_argument("--times", type=int, help="How many attempts to do mutations and indels", default=2)
-	parser.add_argument("-s", "--min_score", type=float, default=85, help="When matching barcodes")
-	parser.add_argument("--max_ambiguity", type=float, default=70, help="If another barcode has this score or higher, then ignore this read because it's ambiguous")
+	parser.add_argument("--times", type=int, help="How many attempts to do mutations and indels", default=1)
+	parser.add_argument("-s", "--min_score", type=float, default=90, help="When matching barcodes")
+	parser.add_argument("--max_ambiguity", type=float, default=78, help="If another barcode has this score or higher, then ignore this read because it's ambiguous")
 	parser.add_argument("--iterations", type=int, default=1000, help="Number of times to check each "
 	                                                                 "barcode set")
 	args = parser.parse_args()
@@ -226,12 +226,18 @@ def main():
 "R5": "ATAGTATTGGCCTCAGAAGT",
 "R6": "GATATATTGAGAAGGCTTGG"}
 
-	forward_bcs = {'1': 'GAGCGTCTGGAATTGGAGGTAAGATCGAGTCTCTAATTCC', 2: 'ATTATATATCAACATTGGCTCCGGCGACCTGTATTCACAA',
-	 3: 'CGGTTAACTGAGAGAAGACCATGATGAATACAGATAAGCT', 4: 'CTGTACGTTCTTGTGGCATCAGTTGGTCCTTCCAACGTGA',
-	 5: 'ATGCCGGAATGAACCTAATCTACTTATGCCGCTGTGGTGT', 6: 'CGGATAACCTTCGTTCCAACTTCTTCTGAACACATATCCT'}
-	reverse_bcs = {'1': 'ATATGTCGCGTGCAGAGGTATGTGGACGTGATAATCAAGG', 2: 'GATAACTGATCCTTCCACTACAGAACTCCTTCGCTAATTG',
-	 3: 'AGCTGCTTAGGTCACCGATTCGAGCGAGCGTCTCAATTAA', 4: 'TCTCTGCAACCTACTGGTATACATATTATATACTTCAACC',
-	 5: 'CGGTGACCGTTGTTATATTGTTATCCAGGTAAGGATCTCC', 6: 'CAATCCACTTGACATGGTTGGTGCTCACGAACGTGAGGAT'}
+	forward_bcs = {'1': 'TACAGAATCAAGTGAGCTCACAGTGCTTAACTAATAATCT', 2: 'TCCGCTCGTCCTCTGTGACATTGTCATATCGTGTTCTTAC',
+	 3: 'GCGTGAGTCATGTCGGCACCTGGCTTAAGAGTATGTTAAC', 4: 'AATACCAATCAATTAGGAGAGGTGTAACCAATTGCCAGCT',
+	 5: 'AAGAACCTGCTGTAGGCAACACTATACGCTGTGTATTGAT', 6: 'GGAGTTATTCAGTGTTATGTCCGCAACTTGTGTTCTGGCG',
+	 7: 'GGTTGACGTAAGACTATCGAATGGACTGGTGTTGTTGGAC', 8: 'TAGCTAATTGCGCCAGGAACCAAGGACAATTGTACCTATT',
+	 9: 'AACTCACCACTATCACTTGGCTGCGCAATGTTAGGTTGTG', 10: 'CTCAAGAATAGTCCTTCTCTGATCTCCTGGAGGAGTGCTT',
+	 11: 'TTCCATATTCAAGATATAGATTAAGTTAGAGCGAGCGAGG', 12: 'GGACTTGTAGCAGAACAATCCTCCTATGGTCTTATTATAA'}
+	reverse_bcs = {'1': 'GACACACCTAACCTAATTCCATGAAGGTAATGTAGCTGTT', 2: 'CACGTGCGACCGTTCACTCTCTTAGGTACGTTGTAGTATA',
+	 3: 'AGAACGGCGCCGGACTAATTAGGTGTCTCAATAGCACACT', 4: 'AAGCCACCGTTAACGAGACTCCTGATGCTCTATTGGATCT',
+	 5: 'TAGACCAACTACAAGAACCACATGGAGAGGTCTCATAATC', 6: 'TAGAGAACGCAGGCTTATACTTAATGACATAGACCGGCGT',
+	 7: 'CGTGGTGTATTCGAGCGTAAGATTAATGTACTGGCGTCCA', 8: 'CAATCTCGGAAGACGAATTCACGAGTGAGCGTCCTTCCAA',
+	 9: 'TAGAAGTGGTACCATGCATAAGTGGTGACGGAAGAGAATA', 10: 'GAGAATTGCTAATATCGAATATAGCTGTGAGAGGACGCCG',
+	 11: 'TTCTACTTCACACCGTTGGCTGCACCTTGGCATCAATAGC', 12: 'CTCTGTACGGCCTTACACCTCCGAAGAATATTACTCATTG'}
 
 	successful = 0
 	for _ in range(args.iterations):
@@ -241,7 +247,7 @@ def main():
 			successful += 1
 	success_rate = successful / args.iterations
 
-	#print(success_rate)
+	print(success_rate)
 
 	# Iteratively add barcodes and choose best ones
 	for _ in range(10):
